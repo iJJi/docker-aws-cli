@@ -1,24 +1,24 @@
 branches:
   only:
-    - master
-
+  - master
 language: ruby
-
 services:
-  - docker
-
+- docker
 before_script:
-  - repo=fingershock/aws-cli
-  - builddate=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-  - buildrev=$(git rev-parse --short HEAD)
-
+- repo=fingershock/aws-cli
+- builddate=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+- buildrev=$(git rev-parse --short HEAD)
 script:
-  - docker build --build-arg VCS_REF=$buildrev --build-arg BUILD_DATE=$builddate -t $repo:latest -f Dockerfile .
-  - awsver=$(docker run --rm $repo:latest aws --version)
-
+- docker build --build-arg VCS_REF=$buildrev --build-arg BUILD_DATE=$builddate -t
+  $repo:latest -f Dockerfile .
+- awsver=$(docker run -t --rm $repo:latest aws --version)
 after_success:
-  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-  - vertags=$(ruby -e "ver=ARGV.first.split('/').last; (0..1).each {|i| puts ver.split('.')[0..i].join('.')}; puts ver;" $awsver)
-  - for ver in $vertags; do docker tag $repo:latest $repo:$ver; docker push $repo:$ver; done
-  - docker push $repo:latest
-
+- docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+- vertags=$(ruby -e "ver=ARGV.first.split('/').last; (0..1).each {|i| puts ver.split('.')[0..i].join('.')};
+  puts ver;" $awsver)
+- for ver in $vertags; do docker tag $repo:latest $repo:$ver; docker push $repo:$ver;
+  done
+- docker push $repo:latest
+notifications:
+  slack:
+    secure: qBoIgdeLLXtiR1dDGISxipqTLwoVtOaFlUX1wNshududriZqDeu3QlA89kKLFt8IrYr8ggYo9Ak1iBhhW+ggSpAnnSalRLKrbLJTy5FNJFiJ5OarmlIKUhAx8RwCb6Yp2/S3pg03UVP1anOOuFqanq4aaU+SwOqu8dIHbKdODXEvPEZVFTSK6X71Fyi81v+QZDpY+nk83AzdbKajk+GTxRadntwAJKRHO4Gsp0lMSTcmXysziaaUoHdSCPWK/cGdPJakgdHJCIUVjmcxx+F5AtZH2HUdVC9n8JP2/BRqadjKOQeBzI6iKnbZGnoyK0PNkRPCT6/7yFuQlp77D6zxG3jv2i6GTq5gWIEsTaYGkzRjugCSK7JPiWyRN0hqmFGDZ7ISxA/MFi5trzwalE8o3NAf24ZvNJxqiNyukH6T7iQihTqYStHar5FyIhSGNp1nKLOtVbbLz7K350iJX541ZPNFvOnLjVWxAQUDpsQkKsfkizi8L48AAoV7yi6SejF4bFKuzgO4yMCPPedCbP6Je+Yh5HHf06reTwtz/M5T0MhuaiOK9pWb7Vt2eYC4lXN6zvPvwZgh/A1j6CEZRTgzXkZEE/70Gv/hOb5k3BirnXU9Drf+/54+enGPCPE0gay61Spg+neLQ0r49axcFYVz7VpXibkDJm76WetCB4dYuiY=
