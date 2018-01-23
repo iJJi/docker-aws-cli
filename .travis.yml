@@ -1,0 +1,24 @@
+branches:
+  only:
+    - master
+
+language: ruby
+
+services:
+  - docker
+
+before_script:
+  - repo=fingershock/aws-cli
+  - builddate=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  - buildrev=$(git rev-parse --short HEAD)
+
+script:
+  - docker build --build-arg VCS_REF=$buildrev --build-arg BUILD_DATE=$builddate -t $repo:latest -f Dockerfile .
+  - awsver=$(docker run --rm $repo:latest aws --version)
+
+after_success:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - vertags=$(ruby -e "ver=ARGV.first.split('/').last; (0..1).each {|i| puts ver.split('.')[0..i].join('.')}; puts ver;" $awsver)
+  - for ver in $vertags; do docker tag $repo:latest $repo:$ver; docker push $repo:$ver; done
+  - docker push $repo:latest
+
